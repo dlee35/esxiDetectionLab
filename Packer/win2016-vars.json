@@ -1,0 +1,21 @@
+{
+    "vsphere_server": "VSPHERE_FQDN_or_IP",
+    "vsphere_user": "VSPHERE_USER",
+    "vsphere_password": "VSPHERE_PASS",
+    "vsphere_template_name": "TEMPLATE_NAME",
+    "vsphere_template_notes": "Created using Packer",
+    "vsphere_folder": "FOLDER_HERE",
+    "vsphere_dc_name": "DATACENTER_HERE",
+    "vsphere_compute_cluster": "COMPUTE_CLUSTER_HERE",
+    "vsphere_host": "ESX_HOST_IP",
+    "vsphere_portgroup_name": "PORTGROUP_NAME",
+    "vsphere_datastore": "DATASTORE_NAME",
+    "winadmin_password": "ADMIN_PASSWORD",
+    "cpu_num": "4",
+    "mem_size": "8192",
+    "disk_size": "57220",
+    "os_iso_path": "OS_ISO_FROM_DATACENTER_PATH",
+    "vmtools_iso_path":"VMTOOLS_ISO_FROM_DATACENTER_PATH",
+    "unattend_file":"setup/2016/autounattend.xml",
+    "guest_os_type":"windows9Server64Guest"
+}
