@@ -1,0 +1,177 @@
+---
+- name: domain | ping DC and domain once
+  win_shell: |
+    "ping /n 1 {{ domain_controller_fqdn }}; ping /n 1 {{ domain }}"
+
+- name: domain | create Servers OU if not exists
+  win_shell: |
+    if (!([ADSI]::Exists("LDAP://OU=Servers,{{ domain_component }}")))
+    {
+      New-ADOrganizationalUnit -Name "Servers" -Server "{{ domain_controller_fqdn }}"
+    }
+
+- name: domain | create Workstations OU if not exists
+  win_shell: |
+    if (!([ADSI]::Exists("LDAP://OU=Workstations,{{ domain_component }}")))
+    {
+      New-ADOrganizationalUnit -Name "Workstations" -Server "{{ domain_controller_fqdn }}"
+    }
+
+- name: domain | reconfiguring auto-login
+  win_shell: |
+    Set-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name AutoAdminLogon -Value 1;
+    Set-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name DefaultUserName -Value "{{ domain_admin }}";
+    Set-ItemProperty "HKLM:\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon" -Name DefaultPassword -Value "{{ domain_admin_password }}"
+
+- name: domain | copy GPO files to DC
+  win_copy:
+    src: files/GPO/
+    dest: C:\GPO
+
+- name: domain | adding WEF Server GPO
+  win_shell: |
+    $GPOName = 'Windows Event Forwarding Server'
+    Import-GPO -BackupGpoName $GPOName -Path "C:\GPO\wef_configuration" -TargetName $GPOName -CreateIfNeeded
+    $gpLinks = $null
+    $OU = "OU=Servers,{{ domain_component }}"
+    $gPLinks = Get-ADOrganizationalUnit -Server "{{ domain_controller_fqdn }}" -Identity $OU -Properties name,distinguishedName, gPLink, gPOptions
+    $GPO = Get-GPO -Name $GPOName
+    If ($gPLinks.LinkedGroupPolicyObjects -notcontains $gpo.path)
+    {
+        New-GPLink -Name $GPOName -Target $OU -Enforced yes
+    }
+    $OU = "ou=Domain Controllers,{{ domain_component }}"
+    $gpLinks = $null
+    $gPLinks = Get-ADOrganizationalUnit -Server "{{ domain_controller_fqdn }}" -Identity $OU -Properties name,distinguishedName, gPLink, gPOptions
+    $GPO = Get-GPO -Name $GPOName
+    If ($gPLinks.LinkedGroupPolicyObjects -notcontains $gpo.path)
+    {
+        New-GPLink -Name $GPOName -Target $OU -Enforced yes
+    }
+    $OU = "ou=Workstations,{{ domain_component }}"
+    $gpLinks = $null
+    $gPLinks = Get-ADOrganizationalUnit -Server "{{ domain_controller_fqdn }}" -Identity $OU -Properties name,distinguishedName, gPLink, gPOptions
+    $GPO = Get-GPO -Name $GPOName
+    If ($gPLinks.LinkedGroupPolicyObjects -notcontains $gpo.path)
+    {
+        New-GPLink -Name $GPOName -Target $OU -Enforced yes
+    }
+
+- name: domain | adding Custom Event Channel GPO
+  win_shell: |
+    $GPOName = 'Custom Event Channel Permissions'
+    Import-GPO -BackupGpoName $GPOName -Path "c:\GPO\wef_configuration" -TargetName $GPOName -CreateIfNeeded
+    $gpLinks = $null
+    $OU = "OU=Servers,{{ domain_component }}"
+    $gPLinks = Get-ADOrganizationalUnit -Server "{{ domain_controller_fqdn }}" -Identity $OU -Properties name,distinguishedName, gPLink, gPOptions
+    $GPO = Get-GPO -Name $GPOName
+    If ($gPLinks.LinkedGroupPolicyObjects -notcontains $gpo.path)
+    {
+        New-GPLink -Name $GPOName -Target $OU -Enforced yes
+    }
+    $OU = "ou=Domain Controllers,{{ domain_component }}"
+    $gPLinks = Get-ADOrganizationalUnit -Server "{{ domain_controller_fqdn }}" -Identity $OU -Properties name,distinguishedName, gPLink, gPOptions
+    $GPO = Get-GPO -Name $GPOName
+    If ($gPLinks.LinkedGroupPolicyObjects -notcontains $gpo.path)
+    {
+        New-GPLink -Name $GPOName -Target $OU -Enforced yes
+    }
+    $OU = "ou=Workstations,{{ domain_component }}"
+    $gPLinks = Get-ADOrganizationalUnit -Server "{{ domain_controller_fqdn }}" -Identity $OU -Properties name,distinguishedName, gPLink, gPOptions
+    $GPO = Get-GPO -Name $GPOName
+    If ($gPLinks.LinkedGroupPolicyObjects -notcontains $gpo.path)
+    {
+        New-GPLink -Name $GPOName -Target $OU -Enforced yes
+    }
+
+- name: domain | forcing gpudate
+  win_shell: gpupdate /force
+
+- name: domain | adding Powershell Logging GPO
+  win_shell: |
+    Import-GPO -BackupGpoName 'Powershell Logging' -Path "c:\GPO\powershell_logging" -TargetName 'Powershell Logging' -CreateIfNeeded
+    $OU = "ou=Workstations,{{ domain_component }}"
+    $gPLinks = $null
+    $gPLinks = Get-ADOrganizationalUnit -Identity $OU -Properties name,distinguishedName, gPLink, gPOptions
+    $GPO = Get-GPO -Name 'Powershell Logging'
+    If ($gPLinks.LinkedGroupPolicyObjects -notcontains $gpo.path)
+    {
+        New-GPLink -Name 'Powershell Logging' -Target $OU -Enforced yes
+    }
+    $OU = "ou=Servers,{{ domain_component }}"
+    $gPLinks = $null
+    $gPLinks = Get-ADOrganizationalUnit -Identity $OU -Properties name,distinguishedName, gPLink, gPOptions
+    $GPO = Get-GPO -Name 'Powershell Logging'
+    If ($gPLinks.LinkedGroupPolicyObjects -notcontains $gpo.path)
+    {
+        New-GPLink -Name 'Powershell Logging' -Target $OU -Enforced yes
+    }
+    $OU = "ou=Domain Controllers,{{ domain_component }}"
+    $gPLinks = $null
+    $gPLinks = Get-ADOrganizationalUnit -Identity $OU -Properties name,distinguishedName, gPLink, gPOptions
+    If ($gPLinks.LinkedGroupPolicyObjects -notcontains $gpo.path)
+    {
+        New-GPLink -Name 'Powershell Logging' -Target $OU -Enforced yes
+    }
+
+- name: domain | adding Domain Controllers Enhanced Auditing GPO
+  win_shell: |
+    $GPOName = 'Domain Controllers Enhanced Auditing Policy'
+    $OU = "ou=Domain Controllers,{{ domain_component }}"
+    Import-GPO -BackupGpoName $GPOName -Path "c:\GPO\Domain_Controllers_Enhanced_Auditing_Policy" -TargetName $GPOName -CreateIfNeeded
+    $gpLinks = $null
+    $gPLinks = Get-ADOrganizationalUnit -Identity $OU -Properties name,distinguishedName, gPLink, gPOptions
+    $GPO = Get-GPO -Name $GPOName
+    If ($gPLinks.LinkedGroupPolicyObjects -notcontains $gpo.path)
+    {   
+        New-GPLink -Name $GPOName -Target $OU -Enforced yes
+    }
+
+- name: domain | adding Servers Enhanced Auditing GPO
+  win_shell: |
+    $GPOName = 'Servers Enhanced Auditing Policy'
+    $OU = "ou=Servers,{{ domain_component }}"
+    Import-GPO -BackupGpoName $GPOName -Path "c:\GPO\Servers_Enhanced_Auditing_Policy" -TargetName $GPOName -CreateIfNeeded
+    $gpLinks = $null
+    $gPLinks = Get-ADOrganizationalUnit -Identity $OU -Properties name,distinguishedName, gPLink, gPOptions
+    $GPO = Get-GPO -Name $GPOName
+    If ($gPLinks.LinkedGroupPolicyObjects -notcontains $gpo.path)
+    {
+        New-GPLink -Name $GPOName -Target $OU -Enforced yes
+    }
+
+- name: domain | adding Workstations Enhanced Auditing GPO
+  win_shell: |
+    $GPOName = 'Workstations Enhanced Auditing Policy'
+    $OU = "ou=Workstations,{{ domain_component }}"
+    Import-GPO -BackupGpoName $GPOName -Path "c:\GPO\Workstations_Enhanced_Auditing_Policy" -TargetName $GPOName -CreateIfNeeded
+    $gpLinks = $null
+    $gPLinks = Get-ADOrganizationalUnit -Identity $OU -Properties name,distinguishedName, gPLink, gPOptions
+    $GPO = Get-GPO -Name $GPOName
+    If ($gPLinks.LinkedGroupPolicyObjects -notcontains $gpo.path)
+    {
+        New-GPLink -Name $GPOName -Target $OU -Enforced yes
+    }
+
+- name: domain | adding Disable Windows Defender GPO
+  win_shell: |
+    Import-GPO -BackupGpoName 'Disable Windows Defender' -Path "c:\GPO\disable_windows_defender" -TargetName 'Disable Windows Defender' -CreateIfNeeded
+    $OU = "ou=Workstations,{{ domain_component }}"
+    $gPLinks = $null
+    $gPLinks = Get-ADOrganizationalUnit -Identity $OU -Properties name,distinguishedName, gPLink, gPOptions
+    $GPO = Get-GPO -Name 'Disable Windows Defender'
+    If ($gPLinks.LinkedGroupPolicyObjects -notcontains $gpo.path)
+    {
+      New-GPLink -Name 'Disable Windows Defender' -Target $OU -Enforced yes
+    }
+    $OU = "ou=Servers,{{ domain_component }}"
+    $gPLinks = $null
+    $gPLinks = Get-ADOrganizationalUnit -Identity $OU -Properties name,distinguishedName, gPLink, gPOptions
+    $GPO = Get-GPO -Name 'Disable Windows Defender'
+    If ($gPLinks.LinkedGroupPolicyObjects -notcontains $gpo.path)
+    {
+        New-GPLink -Name 'Disable Windows Defender' -Target $OU -Enforced yes
+    }
+
+- name: domain | forcing gpudate
+  win_shell: gpupdate /force

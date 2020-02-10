@@ -1,0 +1,88 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - name: Create pre-configuration snapshots
+    vmware_guest_snapshot:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: "{{ datacenter_name }}"
+      folder: "/{{ datacenter_name }}/Lab/"
+      name: "{{ item }}"
+      state: present
+      snapshot_name: installed
+      description: initial_install
+      validate_certs: false
+    loop:
+      - "{{ domain_controller_name }}"
+      - "{{ wef_name }}"
+      - "{{ flsvr_name }}"
+      - "{{ client_1_name }}"
+      - "{{ client_2_name }}"
+
+- hosts: red_team_operator
+  roles:
+    - redteam
+  vars:
+    ansible_user: "{{ linux_ansible_user }}"
+    ansible_password: "{{ linux_ansible_password }}"
+    ansible_become_password: "{{ linux_ansible_password }}"
+    ansible_port: 22
+    ansible_connection: ssh
+
+- hosts: jumphost
+  roles:
+    - common
+    - jumphost
+  vars:
+    ansible_user: "{{ linux_ansible_user }}"
+    ansible_password: "{{ linux_ansible_password }}"
+    ansible_become_password: "{{ linux_ansible_password }}"
+    ansible_port: 22
+    ansible_connection: ssh
+
+- hosts: primary_domain_controller
+  roles:
+    - common
+    - primary_domain_controller
+
+- hosts: windows_event_forwarder
+  roles:
+    - common
+    - windows_event_forwarder
+
+- hosts: file_server
+  roles:
+    - common
+    - fileserver
+
+- hosts: clients
+  roles:
+    - common
+    - clients
+
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - name: Create post-configuration snapshots
+    vmware_guest_snapshot:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: "{{ datacenter_name }}"
+      folder: "/{{ datacenter_name }}/Lab/"
+      name: "{{ item }}"
+      state: present
+      snapshot_name: baseline
+      description: initial_configuration
+      validate_certs: false
+    loop:
+      - "rto"
+      - "fortigate"
+      - "jumphost"
+      - "{{ domain_controller_name }}"
+      - "{{ wef_name }}"
+      - "{{ flsvr_name }}"
+      - "{{ client_1_name }}"
+      - "{{ client_2_name }}"

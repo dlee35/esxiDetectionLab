@@ -1,0 +1,91 @@
+- name: redteam | add Kali repo for BloodHound
+  apt_repository:
+    repo: deb http://http.kali.org/kali kali-rolling main contrib non-free
+    update_cache: no
+
+#- name: redteam | add OpenJDK repo
+#  apt_repository:
+#    repo: ppa:openjdk-r/ppa
+#
+#- name: redteam | add Neo4j GPG key
+#  apt_key:
+#    url: https://debian.neo4j.com/neotechnology.gpg.key 
+#
+#- name: redteam | add Neo4j repo
+#  apt_repository:
+#    repo: deb https://debian.neo4j.com stable latest
+#
+#- name: redteam | installing Neo4j for Bloodhound 
+#  package:
+#    name:
+#      - neo4j
+#    state: latest
+
+- name: redteam | installing Bloodhound 
+  package:
+    name:
+      - bloodhound
+    state: latest
+    force: yes
+    update_cache: yes
+
+- name: redteam | remove Kali repo
+  apt_repository:
+    repo: deb http://http.kali.org/kali kali-rolling main contrib non-free
+    state: absent
+
+#- name: redteam | adjust neo4j.conf to desired outcome
+#  shell: |
+#    echo "dbms.active_database=graph.db
+#    dbms.connector.http.listen_address=0.0.0.0:7474
+#    dbms.connector.bolt.listen_address=0.0.0.0:7687
+#    dbms.allow_format_migration=true" >> /etc/neo4j/neo4j.conf
+
+- name: redteam | adjust neo4j.conf to desired outcome
+  blockinfile:
+    path: /etc/neo4j/neo4j.conf
+    block: |
+      dbms.active_database=graph.db
+      dbms.connector.http.listen_address=0.0.0.0:7474
+      dbms.connector.bolt.listen_address=0.0.0.0:7687
+      dbms.allow_format_migration=true 
+
+#- name: redteam | cloning BloodHound repo from Github
+#  git:
+#    repo: 'https://github.com/BloodHoundAD/BloodHound'
+#    dest: /tmp/BloodHound
+
+#- name: redteam | copying BloodHound graphdb to Neo4j
+#  copy:
+#    src: /tmp/BloodHound/BloodHoundExampleDB.graphdb/
+#    dest: /var/lib/neo4j/data/databases/graph.db
+#    remote_src: yes
+
+- name: redteam | creating required Neo4j directories
+  file:
+    path: /usr/share/neo4j/{{ item }}
+    state: directory
+    mode: '0755'
+  with_items:
+    - run
+    - logs
+
+#- name: redteam | checking to see if BloodHound client exists
+#  stat: path=/opt/BloodHound
+#  register: bhexists
+#
+#- block:
+#  - name: redteam | download BloodHound {{ bloodhound_tag }}
+#    unarchive:
+#      src: https://github.com/BloodHoundAD/BloodHound/releases/download/{{ bloodhound_tag }}/BloodHound-linux-x64.zip
+#      dest: /opt
+#      remote_src: yes
+#  
+#  - name: redteam | rename /opt/BloodHound-linux-x64 to /opt/BloodHound
+#    command: mv /opt/BloodHound-linux-x64 /opt/BloodHound
+#  when: not bhexists.stat.exists
+
+- name: redteam | copying SharpHound to /opt/
+  copy:
+    src: files/nothound.ps1
+    dest: /opt/nothound.ps1

@@ -1,0 +1,24 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - name: Delete "baseline" snapshot
+    vmware_guest_snapshot:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      datacenter: "{{ datacenter_name }}"
+      folder: "/{{ datacenter_name }}/Lab/"
+      name: "{{ item }}"
+      state: absent
+      snapshot_name: baseline
+      validate_certs: false
+    loop:
+      - "rto"
+#      - "fortigate"
+      - "jumphost"
+      - "{{ domain_controller_name }}"
+      - "{{ wef_name }}"
+      - "{{ flsvr_name }}"
+      - "{{ client_1_name }}"
+      - "{{ client_2_name }}"
+

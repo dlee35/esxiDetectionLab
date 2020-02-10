@@ -1,0 +1,23 @@
+---
+- hosts: localhost
+  gather_facts: no
+  tasks:
+  - name: Power on {{ domain }}
+    vmware_guest_powerstate:
+      hostname: "{{ vcenter_hostname }}"
+      username: "{{ vcenter_username }}"
+      password: "{{ vcenter_password }}"
+      folder: "/{{ datacenter_name }}/Lab"
+      name: "{{ item }}"
+      state: powered-on
+      state_change_timeout: 30
+      validate_certs: false
+    loop:
+      - "rto"
+      - "fortigate"
+      - "jumphost"
+      - "{{ domain_controller_name }}"
+      - "{{ wef_name }}"
+      - "{{ flsvr_name }}"
+      - "{{ client_1_name }}"
+      - "{{ client_2_name }}"

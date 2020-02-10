@@ -1,0 +1,19 @@
+---
+dev_shares:
+  - vagrant_files
+  - ci
+  - release
+
+corp_shares:
+  - Corporate
+  - Public
+  - Internal
+
+internal_shares:
+  - M&A
+  - Docs
+  - Expenses
+  - FY_Allocations
+  - Strategy
+  - HR
+  - Legal

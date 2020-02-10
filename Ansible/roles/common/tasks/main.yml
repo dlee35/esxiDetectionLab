@@ -1,0 +1,24 @@
+- block:
+  - include: enable_rdp.yml
+  - include: install_autorunstowin.yml
+  - include: install_sysinternals.yml
+  - include: install_openssh.yml
+    when:
+      - ansible_hostname == client_1_name
+  - include: join_domain.yml
+    when:
+      - ansible_hostname != domain_controller_name 
+  when: ansible_os_family == "Windows"
+
+- name: common | disable Windows Updates
+  win_service: 
+    name: wuauserv
+    state: stopped
+    start_mode: disabled
+  when: ansible_os_family == "Windows"
+
+#- name: common | disable Trusted Installer
+#  win_service: 
+#    name: TrustedInstaller
+#    state: stopped
+#    start_mode: disabled

@@ -1,0 +1,57 @@
+#Remove-WindowsFeature Windows-Defender, Windows-Defender-GUI
+- name: redteam | disabling Windows Defender for installation
+  win_shell: |
+    Uninstall-WindowsFeature -Name Windows-Defender
+    Uninstall-Windowsfeature -Name windowsserverantimalware
+    Set-MpPreference -DisableRealtimeMonitoring $true
+  register: result
+  ignore_errors: yes
+  no_log: true
+
+- name: redteam | checking latest mimikatz version
+  win_shell: '[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12; (Invoke-WebRequest "https://api.github.com/repos/gentilkiwi/mimikatz/releases" -UseBasicParsing | ConvertFrom-Json)[0].tag_name'
+  register: mimikatz_latest
+
+- name: redteam | trimming mimikatz release variable
+  set_fact: mimikatz_tag={{ mimikatz_latest.stdout | trim }}
+  when: mimikatz_latest
+
+- name: redteam | downloading latest mimikatz release
+  win_get_url:
+    url: https://github.com/gentilkiwi/mimikatz/releases/download/{{ mimikatz_tag }}/mimikatz_trunk.zip
+    dest: C:\Users\{{ ansible_user }}\AppData\Local\Temp\mimikatz_trunk.zip
+    follow_redirects: all
+
+- name: redteam | expanding mimikatz release in Tools directory
+  win_unzip:
+    src: C:\Users\{{ ansible_user }}\AppData\Local\Temp\mimikatz_trunk.zip
+    dest: C:\Tools\Mimikatz
+
+- name: redteam | downloading latest atomic-red-team release
+  win_get_url:
+    url: https://github.com/redcanaryco/atomic-red-team/archive/master.zip
+    dest: C:\Users\{{ ansible_user }}\AppData\Local\Temp\atomic_red_team.zip
+    follow_redirects: all
+
+- name: redteam | expanding atomic-red-team release in Tools directory
+  win_unzip:
+    src: C:\Users\{{ ansible_user }}\AppData\Local\Temp\atomic_red_team.zip
+    dest: C:\Tools\Atomic Red Team
+
+- name: redteam | downloading PowerSploit
+  win_get_url:
+    url: https://github.com/PowerShellMafia/PowerSploit/archive/dev.zip 
+    dest: C:\Users\{{ ansible_user }}\AppData\Local\Temp\powersploit.zip
+    follow_redirects: all
+    force: no
+
+- name: redteam | expanding PowerSploit in Tools directory
+  win_unzip:
+    src: C:\Users\{{ ansible_user }}\AppData\Local\Temp\powersploit.zip
+    dest: C:\Tools\PowerSploit
+
+- name: redteam | copying PowerSploit into Modules directory
+  win_robocopy:
+    src: C:\Tools\PowerSploit\PowerSploit-dev
+    dest: C:\Windows\System32\WindowsPowerShell\v1.0\Modules
+    recurse: yes

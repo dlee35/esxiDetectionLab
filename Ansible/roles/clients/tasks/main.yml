@@ -1,0 +1,32 @@
+- include: install_packages.yml
+#- include: install_redteam.yml
+
+- block:
+  - name: clients | mapping dev folder to S on {{ client_1_name }}
+    win_mapped_drive:
+      letter: S
+      path: \\{{ flsvr_name }}\development
+
+  - name: clients | mapping {{ domain_1 }} folder to T on {{ client_1_name }}
+    win_mapped_drive:
+      letter: T
+      path: \\{{ flsvr_name }}\{{ domain_1 }}
+  become: yes
+  become_method: runas
+  vars:
+    ansible_become_user: '{{ client_1_user }}@{{ domain }}'
+    ansible_become_pass: '{{ client_1_password }}'
+  when:
+    - ansible_hostname == client_1_name
+
+- name: clients | mapping {{ domain_1 }} folder to T on {{ ansible_hostname }}
+  win_mapped_drive:
+    letter: T
+    path: \\{{ flsvr_name }}\{{ domain_1 }}
+  become: yes
+  become_method: runas
+  vars:
+    ansible_become_user: '{{ client_2_user }}@{{ domain }}'
+    ansible_become_pass: '{{ client_2_password }}'
+  when:
+    - ansible_hostname != client_1_name

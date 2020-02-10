@@ -1,0 +1,51 @@
+---
+- name: fileserver | create dev directories
+  win_file:
+    path: C:\Shares\dev\{{ item }}
+    state: directory
+  with_items:
+    - "{{ dev_shares }}"
+
+- name: fileserver | create {{ domain_1 }} directories
+  win_file:
+    path: C:\Shares\{{ domain_1 }}\{{ item }}
+    state: directory
+  with_items:
+    - "{{ corp_shares }}"
+
+- name: fileserver | create Internal directories
+  win_file:
+    path: C:\Shares\{{ domain_1 }}\Internal\{{ item }}
+    state: directory
+  with_items:
+    - "{{ internal_shares }}"
+
+- name: fileserver | add Dev share
+  win_share:
+    name: development
+    description: dev share
+    path: C:\Shares\dev
+    list: yes
+    full: Administrators
+    change: Developers
+    read: Users
+    #deny: HR-External
+
+- name: fileshare | add {{ domain_1 }} share
+  win_share:
+    name: "{{ domain_1 }}"
+    description: company share
+    path: C:\Shares\{{ domain_1 }}
+    list: yes
+    full: Administrators
+    read: Users
+
+- name: fileshare | add {{ domain_1 }}\Internal share
+  win_share:
+    name: "{{ domain_1 }}"
+    description: internal share
+    path: C:\Shares\{{ domain_1 }}\Internal
+    list: yes
+    full: Administrators
+    change: ExecutiveStaff
+    read: HumanResources

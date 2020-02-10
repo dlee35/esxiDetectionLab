@@ -1,0 +1,25 @@
+- name: redteam | downloading Microsoft DEB repo package
+  get_url:
+    url: 'https://packages.microsoft.com/config/ubuntu/16.04/packages-microsoft-prod.deb'
+    dest: /tmp/packages-microsoft-prod.deb
+    mode: 0644
+
+- name: redteam | installing Microsoft DEB repo package
+  apt:
+    deb: /tmp/packages-microsoft-prod.deb
+
+- name: redteam | installing Microsoft .NET 2.2 SDK
+  apt:
+    name: dotnet-sdk-2.2
+    state: present
+    update_cache: yes
+
+- name: redteam | cloning Covenant repo from Github
+  git:
+    repo: 'https://github.com/cobbr/Covenant'
+    dest: /opt/Covenant
+
+- name: redteam | building Covenant using .NET
+  shell:
+    cmd: dotnet build
+    chdir: /opt/Covenant/Covenant/

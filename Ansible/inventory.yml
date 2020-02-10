@@ -1,0 +1,31 @@
+---
+# These IP addresses should come from your Terraform config
+primary_domain_controller:
+  hosts:
+    IP_ADDRESS:
+windows_event_forwarder:
+  hosts:
+    IP_ADDRESS:
+file_server:
+  hosts:
+    IP_ADDRESS:
+member_servers:
+  hosts:
+    IP_ADDRESS:
+    IP_ADDRESS:
+clients:
+  hosts:
+    IP_ADDRESS:
+    IP_ADDRESS:
+client_1:
+  hosts:
+    IP_ADDRESS:
+client_2:
+  hosts:
+    IP_ADDRESS:
+jumphost:
+  hosts:
+    IP_ADDRESS:
+red_team_operator:
+  hosts:
+    IP_ADDRESS:

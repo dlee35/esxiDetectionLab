@@ -1,0 +1,6 @@
+- name: packages | install packages via chocolatey
+  win_chocolatey:
+    name: '{{ item }}'
+    state: present
+  loop:
+    - "{{ packages }}"

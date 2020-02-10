@@ -1,0 +1,18 @@
+---
+- name: domain | create Groups OU
+  win_shell: |
+    if (!([ADSI]::Exists("LDAP://OU=Groups,{{ domain_component }}")))
+    {
+      New-ADOrganizationalUnit -Name "Groups" -Server "{{ domain_controller_fqdn }}"
+    }
+
+
+- name: domain | ensure groups exist
+  win_domain_group:
+    name: "{{ item }}"
+    scope: global
+    path: OU=Groups,{{ domain_component }}
+  with_items:
+    - Developers
+    - HumanResources
+    - ExecutiveStaff

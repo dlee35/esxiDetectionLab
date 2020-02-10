@@ -1,0 +1,4 @@
+---
+nwe_windows: 'nwe-agent-package.exe'
+
+nwe_ubuntu: 'nwe-agent_11.4.0.0-2_amd64.deb'

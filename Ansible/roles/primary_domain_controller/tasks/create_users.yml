@@ -1,0 +1,13 @@
+---
+- name: domain | copy users to GPO directory
+  win_template:
+    src: templates/users.j2
+    dest: C:/GPO/users.csv
+
+- name: domain | copy import-lotr to GPO directory
+  win_template:
+    src: templates/import-users.j2
+    dest: C:/GPO/import-users.ps1
+
+- name: domain | run import-lotr powershell script
+  win_command: powershell.exe -ExecutionPolicy ByPass -File C:/GPO/import-users.ps1

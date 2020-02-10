@@ -1,0 +1,13 @@
+- block:
+  - name: jumphost | add single line to 10-ryslog.conf or create it
+    lineinfile:
+      path: /etc/rsyslog.d/10-rsyslog.conf
+      line: '*.* @{{ syslog_server }}:514'
+      create: yes
+    register: rsysadd
+  - name: jumphost | restart rsyslog if previous task status changed
+    systemd:
+      name: rsyslog
+      state: restarted
+    when: rsysadd.changed
+  become: yes

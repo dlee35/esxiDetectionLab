@@ -1,0 +1,48 @@
+- name: sysinternals | creating Sysinternals directories
+  win_file:
+    path: "{{ item }}"
+    state: directory
+  with_items:
+  - C:\Tools\Sysinternals
+  - C:\ProgramData\Sysmon
+
+- name: sysinternals | downloading Sysinternals binaries
+  win_get_url:
+    url: https://live.sysinternals.com/{{ item }}
+    dest: C:\Tools\Sysinternals\{{ item }}
+    follow_redirects: all
+    force: no
+  loop:
+#  - Autoruns64.exe
+#  - Procmon.exe
+#  - PsExec64.exe
+#  - procexp64.exe
+  - Sysmon64.exe
+#  - Tcpview.exe
+
+- name: sysinternals | downloading sysmonconfig.xml from Olaf Hartong
+  win_get_url:
+    url: https://raw.githubusercontent.com/olafhartong/sysmon-modular/master/sysmonconfig.xml
+    dest: C:\ProgramData\Sysmon\sysmonconfig.xml
+    follow_redirects: all
+    force: no
+
+- name: sysinternals | copying Sysmon64 to ProgramData
+  win_robocopy:
+    src: C:\Tools\Sysinternals
+    dest: C:\ProgramData\Sysmon
+    flags: Sysmon64.exe
+
+- name: sysinternals | installing Sysmon64 as a service
+  win_shell: |
+    C:\ProgramData\Sysmon\Sysmon64.exe -accepteula -i C:\ProgramData\Sysmon\sysmonconfig.xml
+  register: result
+  failed_when:
+    - result.rc >= 1
+    - '"already registered" not in result.stdout'
+
+- name: sysinternals | ensuring Sysmon64 service is started
+  win_service:
+    name: Sysmon64
+    start_mode: auto
+    state: started

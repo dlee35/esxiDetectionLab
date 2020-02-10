@@ -1,0 +1,16 @@
+---
+- include: create_domain.yml
+- include: create_gpo.yml
+- include: create_groups.yml
+- include: create_users.yml
+
+- name: domain | clear Windows events
+  win_shell: 'wevtutil el | Select-String -notmatch "Microsoft-Windows-LiveId" | Foreach-Object {wevtutil cl "$_"}'
+
+- name: domain | delete GPO directory
+  win_file:
+    path: C:\GPO
+    state: absent
+
+- name: domain | set SMB1 Auditing
+  win_shell: Set-SmbServerConfiguration -AuditSmb1Access $true -Force

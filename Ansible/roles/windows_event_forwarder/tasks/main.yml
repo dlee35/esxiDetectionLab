@@ -1,0 +1,62 @@
+---
+- name: wef | copying custom event channels DLL
+  win_copy:
+    src: C:/Users/{{ ansible_user }}/AppData/Local/Temp/windows-event-forwarding-master/windows-event-channels/CustomEventChannels.dll
+    dest: C:/Windows/System32/
+    remote_src: yes
+
+- name: wef | copying custom event channels MAN
+  win_copy:
+    src: C:/Users/{{ ansible_user }}/AppData/Local/Temp/windows-event-forwarding-master/windows-event-channels/CustomEventChannels.man
+    dest: C:/Windows/System32/
+    remote_src: yes
+
+- name: wef | installing custom event channels
+  win_command: wevtutil im "c:\windows\system32\CustomEventChannels.man"
+
+- name: wef | resizing channels to 4GB
+  win_shell: |
+    $xml = wevtutil el | select-string -pattern "WEC"
+    foreach ($subscription in $xml) { wevtutil sl $subscription /ms:4294967296 }
+
+- name: wef | start the Windows Event Collector Service
+  win_service: 
+    name: wecsvc
+    state: started
+    start_mode: auto
+
+- name: wef | creating and enabling custom event subscriptions
+  win_shell: | 
+    cd c:/Users/{{ ansible_user }}/AppData/Local/Temp/windows-event-forwarding-master/wef-subscriptions
+    cmd /c "for /r %i in (*.xml) do wecutil cs %i"
+    cmd /c "for /r %i in (*.xml) do wecutil ss %~ni /e:true"
+
+- name: wef | enabling WecUtil quick config
+  win_command: wecutil qc /q:true
+
+- name: wef | create pslogs directory
+  win_file:
+    path: C:\pslogs
+    state: directory
+
+- name: wef | grant ACL permissions
+  win_shell: |
+    $acl = Get-Acl c:\pslogs
+    $acl.SetAccessRuleProtection($true, $false)
+    $administrators = [System.Security.Principal.NTAccount] "Administrators"
+    $permission = $administrators,"FullControl","ObjectInherit,ContainerInherit","None","Allow"
+    $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule $permission
+    $acl.AddAccessRule($accessRule)
+    $everyone = [System.Security.Principal.NTAccount] "Everyone"
+    $permission = $everyone,"Write,ReadAttributes","ObjectInherit,ContainerInherit","None","Allow"
+    $accessRule = New-Object System.Security.AccessControl.FileSystemAccessRule $permission
+    $acl.AddAccessRule($accessRule)
+    $acl | Set-Acl c:\pslogs\
+
+- name: wef | add pslogs share
+  win_share:
+    name: pslogs
+    description: share for logs
+    path: C:\pslogs
+    list: yes
+    full: Everyone

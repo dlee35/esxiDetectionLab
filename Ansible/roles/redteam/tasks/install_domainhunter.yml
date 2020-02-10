@@ -1,0 +1,16 @@
+- name: redteam | installing required packages for domainhunter
+  apt:
+    name:
+      - python3-pip
+      - python3-pil
+      - tesseract-ocr
+
+- name: redteam | cloning domainhunter repo from Github
+  git:
+    repo: 'https://github.com/threatexpress/domainhunter'
+    dest: /opt/domainhunter
+
+- name: redteam | installing pip3 requirements for domainhunter
+  pip: 
+    requirements: /opt/domainhunter/requirements.txt
+    executable: pip3

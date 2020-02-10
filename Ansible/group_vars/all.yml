@@ -1,0 +1,38 @@
+---
+ansible_user: administrator # comes from the Terraform config (or Autounattend.xml)
+ansible_password: S3cret! # comes from the Terraform config (or Autounattend.xml)
+ansible_port: 5985
+ansible_connection: winrm
+ansible_winrm_server_cert_validation: ignore
+
+linux_ansible_user: vagrant # whatever your linux user account is (I used vagrant...)
+linux_ansible_password: vagrant # whatever your linux user password is (I used vagrant...)
+
+vcenter_hostname: VCENTER_FQDN
+vcenter_username: VCENTER_USERNAME
+vcenter_password: VCENTER_PASSWORD
+datacenter_name: VCENTER_DATACENTER
+
+domain: "winlab.lab" # if changed, WEF FQDN in GPO must be updated after configuration is done
+domain_controller_name: "dc"
+domain_controller_ip: IP_ADDRESS
+wef_name: "wef"
+flsvr_name: "flsvr01"
+client_1_name: "win10-1"
+client_2_name: "win10-2"
+
+domain_admin: "administrator@{{ domain }}"
+domain_admin_password: S3cret!
+domain_safemode_password: N0tS3cret!
+local_admin: "analyst"
+local_admin_password: "analyst"
+client_1_user: "samwise"
+client_1_password: "TheBr@ve1!"
+client_2_user: "bilbo"
+client_2_password: "LittleThief1!"
+
+domain_controller_fqdn: "{{domain_controller_name}}.{{domain}}"
+domain_1: "{{ domain.split('.')[0] }}"
+domain_2: "{{ domain.split('.')[1] }}"
+domain_component: "DC={{ domain_1 }},DC={{ domain_2 }}"
+netbios_domain: "{{ domain_1 }}"

@@ -1,0 +1,24 @@
+- block:
+  - name: redteam | installing required packages
+    apt:
+      name:
+        - git
+        - unzip
+        - tmux
+        - proxychains
+        - nmap
+        - wget
+        - software-properties-common
+        - apt-transport-https
+        - xubuntu-desktop
+      state: latest
+    register: pkginstalled
+
+  - name: redteam | reboot if packages installed
+    reboot:
+    when: pkginstalled.changed
+
+  - include: install_domainhunter.yml
+  - include: install_bloodhound.yml
+  - include: install_covenant.yml
+  become: yes
