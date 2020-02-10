@@ -9,6 +9,7 @@ It is designed to instantiate and configure the following machines:
   - Windows Event Collector/Forwarder
   - File Server
   - 2x Win10 Clients
+  - users configured via Import-LOTR (https://github.com/jsecurity101/Import-LOTR)
 - 'External' Red Team Operator (RTO)
 
 These are all based upon vSphere templates and can be altered to fit the desired environment.
@@ -21,5 +22,5 @@ Ansible playbook will be pushed to master branch soon.
 ### To do:
 - Add Ubuntu template Packer build
 - Add link to Fortigate Trial (or Packer-fy it?)
-- Push Ansible playbook
 - Add diagram for better visualization
+- Better documentation
